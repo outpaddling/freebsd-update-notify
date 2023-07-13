@@ -1,0 +1,5 @@
+Notify user that base, packages, and ports will all be updated.
+
+Run updates if it's been a month since the last update, even if
+no freebsd-updates are available.
+
