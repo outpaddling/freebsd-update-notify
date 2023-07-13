@@ -8,30 +8,50 @@ export PATH
 DISPLAY=:0
 export DISPLAY
 
+timestamp_file=/root/.last-freebsd-update
+
+current_time=$(date '+%s')
+last_update_time=$(date -r $timestamp_file '+%s')
+seconds_since_update=$(( $current_time - $last_update_time ))
+days_since_update=$(( $seconds_since_update / 60 / 24 ))
+
+printf "Last update time          = "
+date -j -f '%s' $last_update_time
+printf "Seconds since last update = $seconds_since_update\n"
+printf "Days since last update    = $days_since_update\n"
+
 # Find out who owns DISPLAY
 display_users=$(ps -aexwwj | grep "DISPLAY=$DISPLAY_ID" | awk '{ print $1 }' | sort -u)
 
-success_file=.freebsd-update-notify-yes
-
-if freebsd-update updatesready; then
+if freebsd-update updatesready || [ $days_since_update -gt 7 ]; then
     for user in $display_users; do
 	# Zenity --question returns 0 if the user clicks Yes, but
 	# the exit code of su is not the exit code of zenity.
 	# Create a file if zenity returns 0 so we can determine the
 	# yes/no response after.
 	# su returns 0 if it can access the DISPLAY.
-	cd /home/$user
-	rm -f $success_file
-	
-	if su -l $user -c "/usr/local/bin/zenity --display=:0 --question --text='Updates are available.\nInstall and reboot now?' && touch $success_file"; then
-	    if [ -e $success_file ]; then
-		su -l $user -c '/usr/local/bin/urxvt -e auto-update-system --defaults'
-		su -l $user -c '/usr/local/bin/zenity --display=:0 --info --text="Updates complete.\nThe system will now reboot."'
-	    fi
+
+	printf "Trying $user...\n"
+	# Test access to the DISPLAY
+	if su -l $user -c "env DISPLAY=:0 xwininfo -root > /dev/null"; then
 	    
-	    # If su was able to access DISPLAY...
-	    su -l $user -c '/usr/local/bin/zenity --display=:0 --info --text="You can update manually any time by running\n\n\tauto-admin"'
+	    # If we can access the display, start dialog
+	    if su -l $user -c "/usr/local/bin/zenity --display=:0 --question --text='Updates are available.\nInstall and reboot now?' > /dev/null"; then
+		    su -l $user -c '/usr/local/bin/urxvt -e auto-update-system --defaults > /dev/null'
+		    touch $timestamp_file
+		    su -l $user -c '/usr/local/bin/zenity --display=:0 --info --text="Updates complete.\nThe system will now reboot." > /dev/null'
+	    else
+		# Delay next notification
+		# Convert $last_update_time + 6 hours to a format usable
+		# by the touch command
+		delayed_update_time=$(date -j -f '%s' $(($last_update_time + 6 * 3600)) +'%Y%m%d%H%M.%S')
+		printf "Delayed update time       = $delayed_update_time\n"
+		touch -t $delayed_update_time $timestamp_file
+		su -l $user -c '/usr/local/bin/zenity --display=:0 --info --text="You will be reminded again in 6 hours.\nYou can update manually any time by running\n\n\tauto-admin" > /dev/null'
+	    fi
 	    break   # Don't repeat for other users in $display_users
+	else
+	    printf "Failed.\n"
 	fi
     done
 else
