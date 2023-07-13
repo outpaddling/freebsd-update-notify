@@ -1,2 +1,5 @@
 # freebsd-update-notify
-Script invoked by cron to issue popup notification on desktop when system updates are available
+
+Freebsd-update-notify is a script invoked by cron to check for available
+updates and issue popup notification on the desktop.  The user can elect
+to install and reboot or ignore them for now.

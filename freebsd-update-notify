@@ -1,0 +1,40 @@
+#!/bin/sh -e
+
+# Protect against trojans
+PATH=/bin:/usr/bin:/sbin:/usr/sbin
+export PATH
+
+# Notifications are only generally useful on the console
+DISPLAY=:0
+export DISPLAY
+
+# Find out who owns DISPLAY
+display_users=$(ps -aexwwj | grep "DISPLAY=$DISPLAY_ID" | awk '{ print $1 }' | sort -u)
+
+success_file=.freebsd-update-notify-yes
+
+if freebsd-update updatesready; then
+    for user in $display_users; do
+	# Zenity --question returns 0 if the user clicks Yes, but
+	# the exit code of su is not the exit code of zenity.
+	# Create a file if zenity returns 0 so we can determine the
+	# yes/no response after.
+	# su returns 0 if it can access the DISPLAY.
+	cd /home/$user
+	rm -f $success_file
+	
+	if su -l $user -c "/usr/local/bin/zenity --display=:0 --question --text='Updates are available.\nInstall and reboot now?' && touch $success_file"; then
+	    if [ -e $success_file ]; then
+		su -l $user -c '/usr/local/bin/urxvt -e auto-update-system --defaults'
+		su -l $user -c '/usr/local/bin/zenity --display=:0 --info --text="Updates complete.\nThe system will now reboot."'
+	    fi
+	    
+	    # If su was able to access DISPLAY...
+	    su -l $user -c '/usr/local/bin/zenity --display=:0 --info --text="You can update manually any time by running\n\n\tauto-admin"'
+	    break   # Don't repeat for other users in $display_users
+	fi
+    done
+else
+    # Try to fetch updates.  Next round of cron will notify user.
+    freebsd-update cron
+fi

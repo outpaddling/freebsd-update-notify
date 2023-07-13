@@ -1,0 +1,4 @@
+SHELL=/bin/sh
+PATH=/etc:/bin:/sbin:/usr/bin:/usr/sbin
+
+00 * * * * root /usr/local/libexec/freebsd-update-notify > /var/log/freebsd-update-notify
