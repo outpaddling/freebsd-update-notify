@@ -9,6 +9,9 @@ DISPLAY=:0
 export DISPLAY
 
 timestamp_file=/root/.last-freebsd-update
+if [ ! -e $timestamp_file ]; then
+    touch $timestamp_file
+fi
 
 current_time=$(date '+%s')
 last_update_time=$(date -r $timestamp_file '+%s')
