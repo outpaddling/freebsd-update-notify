@@ -4,6 +4,20 @@
 PATH=/bin:/usr/bin:/sbin:/usr/sbin
 export PATH
 
+# pgrep doesn't find freebsd-update-notify processes.
+# Read the man page thoroughly and tried all relevant flags
+# This oddly causes two freebsd-update-notify processes to be spawned
+# running=$(ps ax | fgrep -v fgrep | fgrep freebsd-update-notify | wc -l)
+# Use a temp file instead
+tmpfile=$(mktemp)
+ps ax | fgrep -v fgrep | fgrep freebsd-update-notify > $tmpfile
+running=$(cat $tmpfile | wc -l) # Use a pipe to hide filename from wc
+rm -f $tmpfile
+if [ $running -gt 1 ]; then
+    printf 'freebsd-update-notify is already running.\n'
+    exit 0
+fi
+
 # Notifications are only generally useful on the console
 DISPLAY=:0
 export DISPLAY
@@ -36,13 +50,13 @@ if freebsd-update updatesready || [ $days_since_update -gt 7 ]; then
 
 	printf "Trying $user...\n"
 	# Test access to the DISPLAY
-	if su -l $user -c "env DISPLAY=:0 xwininfo -root > /dev/null"; then
+	if su -l $user -c "env DISPLAY=:0 xwininfo -root >> /dev/null"; then
 	    
 	    # If we can access the display, start dialog
-	    if su -l $user -c "/usr/local/bin/zenity --display=:0 --question --text='Updates are available.\nInstall and reboot now?' > /dev/null"; then
-		    su -l $user -c '/usr/local/bin/urxvt -e auto-update-system --defaults > /dev/null'
+	    if su -l $user -c "/usr/local/bin/zenity --display=:0 --question --text='Updates are available.\nInstall and reboot now?' >> /dev/null"; then
+		    su -l $user -c '/usr/local/bin/urxvt -e auto-update-system --defaults >> /dev/null'
 		    touch $timestamp_file
-		    su -l $user -c '/usr/local/bin/zenity --display=:0 --info --text="Updates complete.\nThe system will now reboot." > /dev/null'
+		    su -l $user -c '/usr/local/bin/zenity --display=:0 --info --text="Updates complete.\nThe system will now reboot." >> /dev/null'
 	    else
 		# Delay next notification
 		# Convert $last_update_time + 6 hours to a format usable
@@ -50,7 +64,7 @@ if freebsd-update updatesready || [ $days_since_update -gt 7 ]; then
 		delayed_update_time=$(date -j -f '%s' $(($last_update_time + 6 * 3600)) +'%Y%m%d%H%M.%S')
 		printf "Delayed update time       = $delayed_update_time\n"
 		touch -t $delayed_update_time $timestamp_file
-		su -l $user -c '/usr/local/bin/zenity --display=:0 --info --text="You will be reminded again in 6 hours.\nYou can update manually any time by running\n\n\tauto-admin" > /dev/null'
+		su -l $user -c '/usr/local/bin/zenity --display=:0 --info --text="You will be reminded again in 6 hours.\nYou can update manually any time by running\n\n\tauto-admin" >> /dev/null'
 	    fi
 	    break   # Don't repeat for other users in $display_users
 	else
@@ -59,5 +73,6 @@ if freebsd-update updatesready || [ $days_since_update -gt 7 ]; then
     done
 else
     # Try to fetch updates.  Next round of cron will notify user.
+    printf "Running freebsd-update cron...\n"
     freebsd-update cron
 fi
