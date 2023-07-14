@@ -32,6 +32,10 @@ last_update_time=$(date -r $timestamp_file '+%s')
 seconds_since_update=$(( $current_time - $last_update_time ))
 days_since_update=$(( $seconds_since_update / 60 / 24 ))
 
+# FIXME: Make this configurable
+max_days_between_updates=7
+hours_delay=6
+
 printf "Last update time          = "
 date -j -f '%s' $last_update_time
 printf "Seconds since last update = $seconds_since_update\n"
@@ -40,7 +44,7 @@ printf "Days since last update    = $days_since_update\n"
 # Find out who owns DISPLAY
 display_users=$(ps -aexwwj | grep "DISPLAY=$DISPLAY_ID" | awk '{ print $1 }' | sort -u)
 
-if freebsd-update updatesready || [ $days_since_update -gt 7 ]; then
+if freebsd-update updatesready || [ $days_since_update -gt $max_days_between_updates ]; then
     for user in $display_users; do
 	# Zenity --question returns 0 if the user clicks Yes, but
 	# the exit code of su is not the exit code of zenity.
@@ -58,13 +62,14 @@ if freebsd-update updatesready || [ $days_since_update -gt 7 ]; then
 		    touch $timestamp_file
 		    su -l $user -c '/usr/local/bin/zenity --display=:0 --info --text="Updates complete.\nThe system will now reboot." >> /dev/null'
 	    else
-		# Delay next notification
-		# Convert $last_update_time + 6 hours to a format usable
-		# by the touch command
-		delayed_update_time=$(date -j -f '%s' $(($last_update_time + 6 * 3600)) +'%Y%m%d%H%M.%S')
-		printf "Delayed update time       = $delayed_update_time\n"
-		touch -t $delayed_update_time $timestamp_file
-		su -l $user -c '/usr/local/bin/zenity --display=:0 --info --text="You will be reminded again in 6 hours.\nYou can update manually any time by running\n\n\tauto-admin" >> /dev/null'
+		# Delay next notification to $hours_delay hours from now
+		# Convert time to a format usable by the touch command
+		now=$(date '+%s') # Seconds
+		new_time_stamp=$(($now - $max_days_between_updates * 3600 * 24 + $hours_delay * 3600))
+		touch_time=$(date -j -f '%s' $new_time_stamp +'%Y%m%d%H%M.%S')
+		printf "Delayed update time       = $touch_time\n"
+		touch -t $touch_time $timestamp_file
+		su -l $user -c '/usr/local/bin/zenity --display=:0 --info --text="You will be reminded again in $hours_delay hours.\nYou can update manually any time by running\n\n\tauto-admin" >> /dev/null'
 	    fi
 	    break   # Don't repeat for other users in $display_users
 	else
