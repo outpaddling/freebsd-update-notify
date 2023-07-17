@@ -78,8 +78,4 @@ if freebsd-update updatesready || [ $days_since_update -ge $max_days_between_upd
 	    printf "Failed.\n"
 	fi
     done
-else
-    # Try to fetch updates.  Next round of cron will notify user.
-    printf "Running freebsd-update cron...\n"
-    freebsd-update cron
 fi
