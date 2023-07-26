@@ -10,7 +10,7 @@ export PATH
 # running=$(ps ax | fgrep -v fgrep | fgrep freebsd-update-notify | wc -l)
 # Use a temp file instead
 tmpfile=$(mktemp)
-ps ax | fgrep -v fgrep | fgrep libexec/freebsd-update-notify > $tmpfile
+ps ax | fgrep -v fgrep | fgrep libexec/freebsd-update-notify > $tmpfile || true
 running=$(cat $tmpfile | wc -l) # Use a pipe to hide filename from wc
 rm -f $tmpfile
 if [ $running -gt 1 ]; then
@@ -25,6 +25,9 @@ export DISPLAY
 hours_since_update=$(auto-last-update)
 days_since_update=$(( $hours_since_update / 24 ))
 
+printf "Hours since last update = $hours_since_update\n"
+printf "Days since last update  = $days_since_update\n"
+
 # Max time between updates if no freebsd-update activity
 # This ensures that packages are kept up-to-date when months pass
 # between base updates
@@ -33,9 +36,6 @@ max_days_between_updates=7
 
 # Make sure this matches cron file
 hours_delay=6
-
-printf "Hours since last update = $hours_since_update\n"
-printf "Days since last update  = $days_since_update\n"
 
 # Find out who owns DISPLAY
 display_users=$(ps -aexwwj | grep "DISPLAY=$DISPLAY_ID" | awk '{ print $1 }' | sort -u)
