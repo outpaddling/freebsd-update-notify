@@ -1,7 +1,7 @@
 #!/bin/sh -e
 
-# Protect against trojans
-PATH=/bin:/usr/bin:/sbin:/usr/sbin
+# Run as root by cron. Protect against trojans.
+PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 export PATH
 
 # pgrep doesn't find freebsd-update-notify processes.
@@ -22,7 +22,7 @@ fi
 DISPLAY=:0
 export DISPLAY
 
-hours_since_update=$(auto-last-update)
+hours_since_update=$(/usr/local/sbin/auto-last-update)
 days_since_update=$(( $hours_since_update / 24 ))
 
 printf "Hours since last update = $hours_since_update\n"
