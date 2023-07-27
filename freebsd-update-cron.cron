@@ -1,4 +1,4 @@
 SHELL=/bin/sh
 PATH=/etc:/bin:/sbin:/usr/bin:/usr/sbin
 
-00 00 * * * root /usr/sbin/freebsd-update cron > /var/log/freebsd-update-cron 2>&1
+00 00 * * * root /usr/libexec/freebsd-update-cron > /var/log/freebsd-update-cron 2>&1

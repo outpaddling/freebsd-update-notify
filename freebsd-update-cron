@@ -1,0 +1,19 @@
+#!/bin/sh -e
+
+# pgrep doesn't find freebsd-update processes.
+# Read the man page thoroughly and tried all relevant flags
+# This oddly causes two freebsd-update-notify processes to be spawned
+# running=$(ps ax | fgrep -v fgrep | fgrep freebsd-update | wc -l)
+# Use a temp file instead
+tmpfile=$(mktemp)
+ps ax | fgrep -v fgrep | fgrep freebsd-update > $tmpfile || true
+running=$(cat $tmpfile | wc -l) # Use a pipe to hide filename from wc
+rm -f $tmpfile
+if [ $running -gt 1 ]; then
+    printf 'freebsd-update is already running.\n'
+    exit 0
+fi
+
+if ! freebsd-update updatesready; then
+    freebsd-update cron
+fi
