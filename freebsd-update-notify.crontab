@@ -1,3 +1,5 @@
+# Place me in ${PREFIX}/etc/cron.d/freebsd-update-notify
+
 SHELL=/bin/sh
 PATH=/etc:/bin:/sbin:/usr/bin:/usr/sbin
 
