@@ -4,6 +4,9 @@
 PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 export PATH
 
+# Place a time stamp in the log
+date
+
 # pgrep doesn't find freebsd-update-notify processes.
 # Read the man page thoroughly and tried all relevant flags
 # This oddly causes two freebsd-update-notify processes to be spawned
