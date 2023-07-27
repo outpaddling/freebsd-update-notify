@@ -3,5 +3,5 @@
 SHELL=/bin/sh
 PATH=/etc:/bin:/sbin:/usr/bin:/usr/sbin
 
-00 00 * * * root /usr/libexec/freebsd-update-cron > /var/log/freebsd-update-cron 2>&1
+00 00 * * * root /usr/local/libexec/freebsd-update-cron > /var/log/freebsd-update-cron 2>&1
 00 09,15,21 * * * root /usr/local/libexec/freebsd-update-notify > /var/log/freebsd-update-notify 2>&1
