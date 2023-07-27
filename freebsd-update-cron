@@ -6,10 +6,12 @@
 # running=$(ps ax | fgrep -v fgrep | fgrep freebsd-update | wc -l)
 # Use a temp file instead
 tmpfile=$(mktemp)
-ps ax | fgrep -v fgrep | fgrep freebsd-update > $tmpfile || true
+ps ax | fgrep -v fgrep | fgrep 'freebsd-update cron' > $tmpfile || true
+cat $tmpfile
 running=$(cat $tmpfile | wc -l) # Use a pipe to hide filename from wc
+printf "$running freebsd-update cron process(es) detected.\n"
 rm -f $tmpfile
-if [ $running -gt 1 ]; then
+if [ $running -gt 0 ]; then
     printf 'freebsd-update is already running.\n'
     exit 0
 fi
