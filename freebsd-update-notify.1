@@ -1,0 +1,50 @@
+.TH FREEBSD-UPDATE-NOTIFY 1
+.SH NAME    \" Section header
+.PP
+ 
+freebsd-update-notify - Desktop notification for available updates
+
+\" Convention:
+\" Underline anything that is typed verbatim - commands, etc.
+.SH SYNOPSIS
+.PP
+.nf 
+.na
+/usr/local/libexec/freebsd-update-notify
+.ad
+.fi
+
+\" Optional sections
+.SH "DESCRIPTION"
+
+.B freebsd-update-notify
+is a script, normally run by cron(8), that checks for available
+base system updates (downloaded by freebsd-update(8)) and for elapsed
+time since the last successful updates performed by
+auto-update-system(8).
+
+If updates have been downloaded by freebsd-update cron, or sufficient
+time has elapsed since the last successful auto-update-system, a popup
+message is displayed on the console asking the user if they would like
+to perform updates.  If the user clicks "yes", then
+.B auto-update-system --defaults
+is run, to update installed packages, ports, and the base system.
+
+.SH FILES
+.nf
+.na
+/usr/local/etc/cron.d/freebsd-update-notify
+.ad
+.fi
+
+.SH "SEE ALSO"
+freebsd-update(8), auto-update-system(8), auto-admin(8)
+
+.SH BUGS
+Please report bugs to the author and send patches in unified diff format.
+(man diff for more information)
+
+.SH AUTHOR
+.nf
+.na
+J. Bacon
