@@ -56,8 +56,7 @@ if freebsd-update updatesready || [ $days_since_update -ge $max_days_between_upd
 	if su -l $user -c "env DISPLAY=:0 xwininfo -root" > /dev/null; then
 	    # If we can access the display, start dialog
 	    if su -l $user -c "/usr/local/bin/zenity --display=:0 --question --text='Updates are available.\nInstall and reboot now?'" > /dev/null; then
-		    su -l $user -c '/usr/local/bin/urxvt -e auto-update-system --defaults > /dev/null'
-		    touch $timestamp_file
+		    su -l $user -c '/usr/local/bin/urxvt -e auto-update-system --pause --defaults > /dev/null'
 		    su -l $user -c '/usr/local/bin/zenity --display=:0 --info --text="Updates complete.\nThe system will now reboot."' > /dev/null
 	    else
 		su -l $user -c '/usr/local/bin/zenity --display=:0 --info --text="You will be reminded again in $hours_delay hours.\nYou can update manually any time by running\n\n\tauto-admin"' > /dev/null
