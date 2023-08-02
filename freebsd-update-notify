@@ -34,8 +34,7 @@ printf "Days since last update  = $days_since_update\n"
 # Max time between updates if no freebsd-update activity
 # This ensures that packages are kept up-to-date when months pass
 # between base updates
-# FIXME: Make this configurable
-max_days_between_updates=7
+max_days_between_updates=$(awk '$1 == "max-days-between-updates" { print $2 }' /usr/local/etc/freebsd-update-notify.conf)
 
 # Make sure this matches cron file
 hours_delay=6

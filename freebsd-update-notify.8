@@ -24,7 +24,8 @@ time since the last successful updates performed by
 auto-update-system(8).
 
 If updates have been downloaded by freebsd-update cron, or sufficient
-time has elapsed since the last successful auto-update-system, a popup
+time has elapsed since the last successful auto-update-system (according
+to etc/freebsd-update-notify.conf), a popup
 message is displayed on the console asking the user if they would like
 to perform updates.  If the user clicks "yes", then
 .B auto-update-system --defaults
@@ -33,6 +34,7 @@ is run, to update installed packages, ports, and the base system.
 .SH FILES
 .nf
 .na
+/usr/local/etc/freebsd-update-notify.conf
 /usr/local/etc/cron.d/freebsd-update-notify
 .ad
 .fi
