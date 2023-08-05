@@ -49,6 +49,9 @@ fi
 DISPLAY=:0
 export DISPLAY
 
+# NetBSD laptop, quagga
+xhost + local:
+
 CONF_FILE=$CONF_DIR/freebsd-update-notify.conf
 
 hours_since_update=$(/usr/local/sbin/auto-last-update)
