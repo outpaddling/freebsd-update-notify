@@ -1,8 +1,32 @@
 #!/bin/sh -e
 
+record_reminder_time()
+{
+    current_time=$(date '+%s')
+    current_time=$((current_time / 3600))
+    mkdir -p $CONF_DIR
+    printf "$current_time\n" > $CONF_DIR/last-reminder
+}
+
+hours_since_reminder()
+{
+    current_time=$(date '+%s')
+    current_time=$((current_time / 3600))
+    reminder_file=$CONF_DIR/last-reminder
+    if [ -e $reminder_file ]; then
+	last_reminder=$(cat $reminder_file)
+	printf "$((current_time - last_reminder))\n"
+    else
+	# Assume updates are needed
+	printf "24\n"
+    fi
+}
+
 # Run as root by cron. Protect against trojans.
 PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 export PATH
+
+CONF_DIR=/usr/local/etc/freebsd-update-notify
 
 # Place a time stamp in the log
 date
@@ -25,24 +49,36 @@ fi
 DISPLAY=:0
 export DISPLAY
 
-hours_since_update=$(/usr/local/sbin/auto-last-update)
-days_since_update=$(( $hours_since_update / 24 ))
+CONF_FILE=$CONF_DIR/freebsd-update-notify.conf
 
-printf "Hours since last update = $hours_since_update\n"
-printf "Days since last update  = $days_since_update\n"
+hours_since_update=$(/usr/local/sbin/auto-last-update)
+if [ $hours_since_update = unknown ]; then
+    # Assume updates are needed
+    days_since_update=7
+else
+    days_since_update=$(( $hours_since_update / 24 ))
+fi
 
 # Max time between updates if no freebsd-update activity
 # This ensures that packages are kept up-to-date when months pass
 # between base updates
-max_days_between_updates=$(awk '$1 == "max-days-between-updates" { print $2 }' /usr/local/etc/freebsd-update-notify.conf)
+max_days_between_updates=$(awk '$1 == "max-days-between-updates" { print $2 }' $CONF_FILE)
 
 # Make sure this matches cron file
-hours_delay=6
+hours_between_reminders=$(awk '$1 == "hours-between-reminders" { print $2 }' $CONF_FILE)
+
+printf "Hours since last update   = $hours_since_update\n"
+printf "Days since last update    = $days_since_update\n"
+printf "Max days between updates  = $max_days_between_updates\n"
+printf "Hours since last reminder = $(hours_since_reminder)\n"
+printf "Hours between reminders   = $hours_between_reminders\n"
 
 # Find out who owns DISPLAY
 display_users=$(ps -aexwwj | grep "DISPLAY=$DISPLAY_ID" | awk '{ print $1 }' | sort -u)
 
-if freebsd-update updatesready || [ $days_since_update -ge $max_days_between_updates ]; then
+if [ $days_since_update -ge $max_days_between_updates ] && \
+   [ $(hours_since_reminder) -ge $hours_between_reminders ] || \
+   freebsd-update updatesready; then
     for user in $display_users; do
 	# Zenity --question returns 0 if the user clicks Yes, but
 	# the exit code of su is not the exit code of zenity.
@@ -59,7 +95,8 @@ if freebsd-update updatesready || [ $days_since_update -ge $max_days_between_upd
 		su -l $user -c '/usr/local/bin/zenity --display=:0 --info --text="Updates complete.\nThe system will now reboot."' > /dev/null
 		shutdown -r now
 	    else
-		su -l $user -c '/usr/local/bin/zenity --display=:0 --info --text="You will be reminded again in $hours_delay hours.\nYou can update manually any time by running\n\n\tauto-admin"' > /dev/null
+		su -l $user -c "/usr/local/bin/zenity --display=:0 --info --text='You will be reminded again in $hours_between_reminders hours.\nYou can update manually any time by running\n\n\tauto-admin'" > /dev/null
+		record_reminder_time
 	    fi
 	    break   # Don't repeat for other users in $display_users
 	else

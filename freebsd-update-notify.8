@@ -25,17 +25,26 @@ auto-update-system(8).
 
 If updates have been downloaded by freebsd-update cron, or sufficient
 time has elapsed since the last successful auto-update-system (according
-to etc/freebsd-update-notify.conf), a popup
+to the "max-days-between-updates" in
+etc/freebsd-update-notify/freebsd-update-notify.conf), a popup
 message is displayed on the console asking the user if they would like
-to perform updates.  If the user clicks "yes", then
+to perform updates.
+
+If the user clicks "Yes", then
 .B auto-update-system --defaults
 is run, to update installed packages, ports, and the base system.
+
+If the user clicks "No", the time is recorded to
+/usr/local/etc/freebsd-update-notify/last-reminder, and the next
+notification will occur in the number of hours specified in
+the "hours-between-reminders" entry in
+/usr/local/etc/freebsd-update-notify/freebsd-update-notify.conf.
 
 .SH FILES
 .nf
 .na
-/usr/local/etc/freebsd-update-notify.conf
-/usr/local/etc/cron.d/freebsd-update-notify
+/usr/local/etc/freebsd-update-notify/freebsd-update-notify.conf
+/usr/local/etc/freebsd-update-notify/cron.d/freebsd-update-notify
 .ad
 .fi
 
