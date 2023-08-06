@@ -49,9 +49,6 @@ fi
 DISPLAY=:0
 export DISPLAY
 
-# NetBSD laptop, quagga
-xhost + local:
-
 CONF_FILE=$CONF_DIR/freebsd-update-notify.conf
 
 hours_since_update=$(/usr/local/sbin/auto-last-update)
@@ -78,6 +75,12 @@ printf "Hours between reminders   = $hours_between_reminders\n"
 
 # Find out who owns DISPLAY
 display_users=$(ps -aexwwj | grep "DISPLAY=$DISPLAY_ID" | awk '{ print $1 }' | sort -u)
+
+# Make sure root can access the local display
+# NetBSD laptop, quagga
+for user in $display_users; do
+    su -l $user -c 'env DISPLAY=:0 xhost +local:root' > /dev/null || true
+done
 
 if [ $days_since_update -ge $max_days_between_updates ] && \
    [ $(hours_since_reminder) -ge $hours_between_reminders ] || \
