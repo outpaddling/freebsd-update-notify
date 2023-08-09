@@ -52,6 +52,13 @@ the "hours-between-reminders" entry in
 freebsd-update(8), auto-update-system(8), auto-admin(8)
 
 .SH BUGS
+The current implementation (a shell script using zenity) has limitations.
+For example, there is no way to disable keyboard input, so if a notification
+window pops up and grabs the keyboard while the user is typing an email,
+the user may inadvertently answer the dialog with a random keystroke.
+The best solution to this problem is reimplementing freebsd-update-notify
+as a standalone X11 app with full input control.
+
 Please report bugs to the author and send patches in unified diff format.
 (man diff for more information)
 
