@@ -98,15 +98,8 @@ if [ $days_since_update -ge $max_days_between_updates ] && \
 	    # If we can access the display, start dialog
 	    if su -l $user -c "/usr/local/bin/zenity --display=:0 --question --text='Updates are available.\nInstall and reboot now?'" > /dev/null; then
 		previous_update_time=$(cat /usr/local/etc/auto-admin/last-system-update)
-		su -l $user -c '/usr/local/bin/urxvt -e auto-update-system --pause --defaults > /dev/null'
+		su -l $user -c '/usr/local/bin/urxvt -e auto-update-system --pause --yes > /dev/null'
 		new_update_time=$(cat /usr/local/etc/auto-admin/last-system-update)
-		# Vars will be empty if file does not exist
-		if [ 0"$new_update_time" = 0"$previous_update_time" ]; then
-		    su -l $user -c '/usr/local/bin/zenity --display=:0 --info --text="Updates failed.\nTry running \"auto-update-system --defaults\" manually."' > /dev/null
-		else
-		    su -l $user -c '/usr/local/bin/zenity --display=:0 --info --text="Updates complete.\nThe system will now reboot."' > /dev/null
-		    shutdown -r now
-		fi
 	    else
 		su -l $user -c "/usr/local/bin/zenity --display=:0 --info --text='You will be reminded again in $hours_between_reminders hours.\nYou can update manually any time by running\n\n\tauto-admin'" > /dev/null
 		record_reminder_time
