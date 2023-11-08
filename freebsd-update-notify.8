@@ -40,6 +40,18 @@ notification will occur in the number of hours specified in
 the "hours-between-reminders" entry in
 /usr/local/etc/freebsd-update-notify/freebsd-update-notify.conf.
 
+A sample crontab file is installed in
+/usr/local/etc/freebsd-update-notify/freebsd-update-notify.crontab.sample,
+and copied to /usr/local/etc/cron.d/freebsd-update-notify if the latter
+does not already exist.  Users can edit
+/usr/local/etc/cron.d/freebsd-update-notify to change the schedule for
+running freebsd-update-notify downloads and checks.
+See crontab(5) for details about the crontab file format.
+
+Other configuration options are found in
+/usr/local/etc/freebsd-update-notify/freebsd-update-notify.conf,
+which can also be edited to customize behavior.
+
 .SH FILES
 .nf
 .na
@@ -54,7 +66,7 @@ freebsd-update(8), auto-update-system(8), auto-admin(8)
 .SH BUGS
 The current implementation (a shell script using zenity) has limitations.
 For example, there is no way to disable keyboard input, so if a notification
-window pops up and grabs the keyboard while the user is typing an email,
+window pops up and grabs the keyboard while the user is typing,
 the user may inadvertently answer the dialog with a random keystroke.
 The best solution to this problem is reimplementing freebsd-update-notify
 as a standalone X11 app with full input control.
