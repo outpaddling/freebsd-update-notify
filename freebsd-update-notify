@@ -101,7 +101,7 @@ if [ $days_since_update -ge $max_days_between_updates ] && \
 		su -l $user -c '/usr/local/bin/urxvt -e auto-update-system --pause --yes > /dev/null'
 		new_update_time=$(cat /usr/local/etc/auto-admin/last-system-update)
 	    else
-		su -l $user -c "/usr/local/bin/zenity --display=:0 --info --text='You will be reminded again in $hours_between_reminders hours.\nYou can update manually any time by running\n\n\tauto-admin'" > /dev/null
+		su -l $user -c "/usr/local/bin/zenity --display=:0 --info --text='You will be reminded again in $hours_between_reminders hours\nor sooner of important base updates are available.\nYou can update manually any time by running\n\n\tauto-admin'" > /dev/null
 		record_reminder_time
 	    fi
 	    break   # Don't repeat for other users in $display_users
