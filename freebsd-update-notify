@@ -80,7 +80,7 @@ display_users=$(ps -aexwwj | grep "DISPLAY=$DISPLAY_ID" | awk '{ print $1 }' | s
 # NetBSD laptop, quagga
 for user in $display_users; do
     # su -l fails intermittently under KDE + sddm
-    su -m $user -c 'env DISPLAY=:0 xhost +local:root' > /dev/null || true
+    su -m $user -c 'env DISPLAY=:0 /usr/local/bin/xhost +local:root' > /dev/null || true
 done
 
 if freebsd-update updatesready || \
