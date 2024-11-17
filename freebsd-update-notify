@@ -100,7 +100,7 @@ if freebsd-update updatesready || \
 		if su -l $user -c "/usr/local/bin/zenity --display=:0 --question --text='Updates are available.\nInstall and reboot now?'" > /dev/null; then
 		    # || true in case auto-update-system has never been run before
 		    previous_update_time=$(cat /usr/local/etc/auto-admin/last-system-update || true)
-		    su -l $user -c '/usr/local/bin/urxvt -e auto-update-system --pause --yes > /dev/null'
+		    su -l $user -c 'env DISPLAY=:0 /usr/local/bin/urxvt -e auto-update-system --pause --yes > /dev/null'
 		    new_update_time=$(cat /usr/local/etc/auto-admin/last-system-update)
 		else
 		    su -l $user -c "/usr/local/bin/zenity --display=:0 --info --text='You will be reminded again in $hours_between_reminders hours.\nYou can update manually any time by running\n\n\tauto-admin'" > /dev/null
