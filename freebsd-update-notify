@@ -80,7 +80,8 @@ display_users=$(ps -aexwwj | grep "DISPLAY=$DISPLAY_ID" | awk '{ print $1 }' | s
 # NetBSD laptop, quagga
 for user in $display_users; do
     # su -l fails intermittently under KDE + sddm
-    su -m $user -c 'env DISPLAY=:0 /usr/local/bin/xhost +local:root' > /dev/null || true
+    # su -m copies full env and aliases, which is less secure
+    su $user -c 'env DISPLAY=:0 /usr/local/bin/xhost +local:root' > /dev/null || true
 done
 
 if freebsd-update updatesready || \
@@ -95,7 +96,7 @@ if freebsd-update updatesready || \
     
 	    printf "Trying $user...\n"
 	    # Test access to the DISPLAY
-	    if su -l $user -c "env DISPLAY=:0 xwininfo -root" > /dev/null; then
+	    if su -l $user -c "env DISPLAY=:0 /usr/local/bin/xwininfo -root" > /dev/null; then
 		# If we can access the display, start dialog
 		if su -l $user -c "/usr/local/bin/zenity --display=:0 --question --text='Updates are available.\nInstall and reboot now?'" > /dev/null; then
 		    # || true in case auto-update-system has never been run before
