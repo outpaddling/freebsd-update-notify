@@ -1,1 +1,3 @@
 Notify user that base, packages, and ports will all be updated.
+
+pkgbase support: Use pkg upgrade --dry-run
