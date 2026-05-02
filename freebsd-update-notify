@@ -1,5 +1,30 @@
 #!/bin/sh -e
 
+##########################################################################
+#   Title:
+#       Optional, defaults to the name of the script sans extention
+#
+#   Section:
+#       Optional, defaults to 1
+#
+#   Synopsis:
+#       
+#   Description:
+#       
+#   Arguments:
+#       
+#   Returns:
+#       0 on success, non-zero error codes otherwise
+#
+#   Examples:
+#
+#   Files:
+#
+#   Environment:
+#
+#   See also:
+##########################################################################
+
 record_reminder_time()
 {
     current_time=$(date '+%s')
@@ -21,6 +46,24 @@ hours_since_reminder()
 	printf "24\n"
     fi
 }
+
+using_pkgbase()
+
+{
+    if grep -q 'url:.*base_' /etc/pkg/*.conf /usr/local/etc/pkg/repos/*.conf 2> /dev/null; then
+	return 0
+    else
+	return 1
+    fi
+}
+
+##########################################################################
+#   Main
+##########################################################################
+
+if [ $# != 0 ]; then
+    usage
+fi
 
 # Run as root by cron. Protect against trojans.
 PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin
@@ -84,33 +127,47 @@ for user in $display_users; do
     su $user -c 'env DISPLAY=:0 /usr/local/bin/xhost +local:root' > /dev/null || true
 done
 
-if freebsd-update updatesready || \
-    [ $days_since_update -ge $max_days_between_updates ]; then
-    if [ $(hours_since_reminder) -ge $hours_between_reminders ]; then
-	for user in $display_users; do
-	    # Zenity --question returns 0 if the user clicks Yes, but
-	    # the exit code of su is not the exit code of zenity.
-	    # Create a file if zenity returns 0 so we can determine the
-	    # yes/no response after.
-	    # su returns 0 if it can access the DISPLAY.
-    
-	    printf "Trying $user...\n"
-	    # Test access to the DISPLAY
-	    if su -l $user -c "env DISPLAY=:0 /usr/local/bin/xwininfo -root" > /dev/null; then
-		# If we can access the display, start dialog
-		if su -l $user -c "/usr/local/bin/zenity --display=:0 --question --text='Updates are available.\nInstall and reboot now?'" > /dev/null; then
-		    # || true in case auto-update-system has never been run before
-		    previous_update_time=$(cat /usr/local/etc/auto-admin/last-system-update || true)
-		    su -l $user -c 'env DISPLAY=:0 /usr/local/bin/urxvt -e auto-update-system --pause --yes > /dev/null'
-		    new_update_time=$(cat /usr/local/etc/auto-admin/last-system-update)
-		else
-		    su -l $user -c "/usr/local/bin/zenity --display=:0 --info --text='You will be reminded again in $hours_between_reminders hours.\nYou can update manually any time by running\n\n\tauto-admin'" > /dev/null
-		    record_reminder_time
-		fi
-		break   # Don't repeat for other users in $display_users
-	    else
-		printf "Failed.\n"
-	    fi
-	done
+updates_ready=no
+if using_pkgbase; then
+    if ! pkg upgrade --dry-run --repository FreeBSD-base | grep 'Your packages are up to date'; then
+	updates_ready=yes
     fi
+else
+    if freebsd-update updatesready; then
+	updates_ready=yes
+    fi
+fi
+
+wait_time_expired=no
+if [ $days_since_update -ge $max_days_between_updates ] &&
+   [ $(hours_since_reminder) -ge $hours_between_reminders ]; then
+    wait_time_expired=yes
+fi
+
+if [ $updates_ready = yes ] || [ $wait_time_expired = yes ]; then
+    for user in $display_users; do
+	# Zenity --question returns 0 if the user clicks Yes, but
+	# the exit code of su is not the exit code of zenity.
+	# Create a file if zenity returns 0 so we can determine the
+	# yes/no response after.
+	# su returns 0 if it can access the DISPLAY.
+
+	printf "Trying $user...\n"
+	# Test access to the DISPLAY
+	if su -l $user -c "env DISPLAY=:0 /usr/local/bin/xwininfo -root" > /dev/null; then
+	    # If we can access the display, start dialog
+	    if su -l $user -c "/usr/local/bin/zenity --display=:0 --question --text='Updates are available.\nInstall and reboot now?'" > /dev/null; then
+		# || true in case auto-update-system has never been run before
+		previous_update_time=$(cat /usr/local/etc/auto-admin/last-system-update || true)
+		su -l $user -c 'env DISPLAY=:0 /usr/local/bin/urxvt -e auto-update-system --pause --yes > /dev/null'
+		new_update_time=$(cat /usr/local/etc/auto-admin/last-system-update)
+	    else
+		su -l $user -c "/usr/local/bin/zenity --display=:0 --info --text='You will be reminded again in $hours_between_reminders hours.\nYou can update manually any time by running\n\n\tauto-admin'" > /dev/null
+		record_reminder_time
+	    fi
+	    break   # Don't repeat for other users in $display_users
+	else
+	    printf "Failed.\n"
+	fi
+    done
 fi
