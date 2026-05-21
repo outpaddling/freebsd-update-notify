@@ -1,4 +1,5 @@
-Notify user that base, packages, and ports will all be updated.
+Just tell user to run auto-update-system manually
+    Don't provide anything to click on in a popup window
 
 Notify if using quarterly and any updates available?
 
